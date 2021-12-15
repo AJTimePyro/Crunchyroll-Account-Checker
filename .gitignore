@@ -6,3 +6,7 @@ venv
 
 # Test Files
 testexp
+
+# Cache File
+__pycache__
+
