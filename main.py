@@ -19,9 +19,12 @@ import src.checker
 
 def main():
     
+    if not os.path.exists('result'):
+        os.makedirs('result')
     filename = input("Enter the name or path of file: ")
     if os.path.isfile(filename):
         checker = src.checker.CrunchyrollChecker(filename)
+        checker.checker()
     else:
         print("File not found.")
 

