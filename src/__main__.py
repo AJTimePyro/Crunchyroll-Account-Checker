@@ -7,7 +7,7 @@ from urllib import request, parse
 
 class CrunchyrollChecker:
 
-    def __init__(self):
+    def __init__(self, filename):
         self.apiUrl = "https://beta-api.crunchyroll.com/"
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36",
@@ -18,6 +18,7 @@ class CrunchyrollChecker:
             "grant_type": "password",
             "scope": "offline_access"
         }
+        print("lol")
     
     def _makeRequest(
         self,
