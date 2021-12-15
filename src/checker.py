@@ -16,6 +16,7 @@ import time
 regexEmailPassCombo = '[\w\.]+@[\w\.]+:[\S]+'
 
 
+### Checker Class
 class CrunchyrollChecker:
 
     def __init__(self, filename):
@@ -49,6 +50,8 @@ class CrunchyrollChecker:
             else:
                 continue
         file.close()
+        self.hitFile.close()
+        self.invalid.close()
     
     def _makeRequest(
         self,
@@ -118,6 +121,8 @@ class CrunchyrollChecker:
     def _resultSaving(self, result = None):
         if result:
             self.hitFile.write(f'{self.email}:{self.password}' + '\n')
+            self.hitFile.flush()
         else:
             self.invalid.write(f'{self.email}:{self.password}' + '\n')
+            self.invalid.flush()
 
