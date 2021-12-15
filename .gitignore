@@ -3,10 +3,12 @@
 # Virtual environment
 venv
 
-
 # Test Files
 testexp
 
 # Cache File
 __pycache__
+
+# Result File
+result
 
