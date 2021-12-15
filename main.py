@@ -14,19 +14,19 @@
 import os
 
 # Importing Dev Defined Script
-import src
+import src.checker
 
 
 def main():
     
     filename = input("Enter the name or path of file: ")
     if os.path.isfile(filename):
-        checker = src.CrunchyrollChecker(filename)
-        checker.start()
+        checker = src.checker.CrunchyrollChecker(filename)
     else:
         print("File not found.")
 
 
+### yeaaahhhh!!!!
 if __name__ == "__main__":
     main()
 
