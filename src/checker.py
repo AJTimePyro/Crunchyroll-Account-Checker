@@ -130,8 +130,14 @@ class CrunchyrollChecker:
         self.freeFile = open(f'{resultDir}free.txt', 'a')
         self.invalid = open(f'{resultDir}invalid.txt', 'a')
         self.error = open(f'{resultDir}error.txt', 'a')
+        self.trial = open(f'{resultDir}trial.txt', 'a')
 
-    def _resultSaving(self, file = 'error', error = None):
+    def _resultSaving(
+        self,
+        file = 'error',
+        error = None,
+        free_trial = False
+        ):
         printMsg = f'{self.email}:{self.password}'
         if file == 'error':
             fileRefer = self.error
@@ -140,15 +146,19 @@ class CrunchyrollChecker:
         elif file == 'invalid':
             fileRefer = self.invalid
             fileMsg = printMsg + '\n'
-            printMsg += ' Wrong!'
+            printMsg += ' Wrong'
         elif file == 'hit':
-            fileRefer = self.hitFile
             fileMsg = printMsg + '\n'
-            printMsg += ' Hit Found!'
+            if free_trial:
+                fileRefer = self.trial
+                printMsg += ' Free Trial Found'
+            else:
+                fileRefer = self.hitFile
+                printMsg += ' Hit Found' 
         else:
             fileRefer = self.freeFile
             fileMsg = printMsg + '\n'
-            printMsg += ' Free Account Found!'
+            printMsg += ' Free Account Found'
         print(printMsg)
         fileRefer.write(fileMsg)
         fileRefer.flush()
@@ -201,8 +211,11 @@ class CrunchyrollChecker:
         else:
             resData = self._parseResponse(res)
             if resData['total']:
-                self._resultSaving(file = 'hit')
+                free_trial = resData['items'][0]['active_free_trial']
+                self._resultSaving(
+                    file = 'hit',
+                    free_trial = free_trial
+                )
             else:
                 self._resultSaving(file = 'free')
-            print(resData)
 

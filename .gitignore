@@ -5,6 +5,8 @@ venv
 
 # Test Files
 testexp
+extra/
+combo.txt
 
 # Cache File
 __pycache__
