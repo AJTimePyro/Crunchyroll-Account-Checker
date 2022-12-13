@@ -41,7 +41,7 @@ git clone https://github.com/AJTimePyro/Crunchyroll-Account-Checker && cd Crunch
 After above command just enter path of combo file.
 
 ## Results
-It will automatically store **Hits**, **Free**, **Invalid** and **Errors** in _Result_ Directory.
+It will automatically store **Hits**, **Free Trials**,**Free**, **Invalid** and **Errors** in _Result_ Directory.
 
 ## Developers
 If you want to contribute in this project then fork the repo and commit your changes and make a pull request.
