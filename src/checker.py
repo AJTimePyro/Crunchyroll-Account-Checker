@@ -119,10 +119,11 @@ class CrunchyrollChecker:
     def _filterEmailPass(self, line):
         loginDetail = re.findall(regexEmailPassCombo, line)
         if loginDetail:
-            self.email, self.password = loginDetail[0].split(':')
-            return True
-        else:
-            return None
+            login_info_parsed = loginDetail[0].split(':')
+            if len(login_info_parsed) == 2:
+                self.email, self.password = login_info_parsed
+                return True
+        return None
     
     def _resultFile(self):
         resultDir = 'result//'
