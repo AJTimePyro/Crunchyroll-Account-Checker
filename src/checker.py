@@ -13,7 +13,7 @@ import time
 
 
 ### Some Global Variable
-regexEmailPassCombo = '[\w\.]+@[\w\.]+:[\S]+'
+regexEmailPassCombo = r'[\w\.]+@[\w\.]+:[\S]+'
 
 
 ### Checker Class
@@ -55,15 +55,16 @@ class CrunchyrollChecker:
     def _makeRequest(
         self,
         url : str,
-        headers : dict = None,
-        data : dict = None
+        headers : dict = {},
+        data : dict = {}
         ):
+        ndata = data
         if data:
-            data = parse.urlencode(data).encode()
+            ndata = parse.urlencode(data).encode()
         req = request.Request(
             url,
             headers = headers,
-            data = data
+            data = ndata
         )
         return req
 
