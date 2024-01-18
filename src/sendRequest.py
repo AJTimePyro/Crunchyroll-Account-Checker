@@ -79,8 +79,9 @@ class Request:
         res
     ):
         res = res.read()
-        res = res.decode('utf-8')
-        res = json.loads(res)
+        res : str = res.decode('utf-8')
+        if res.startswith("{"):
+            res = json.loads(res)
         return res
     
     def __buildRequest(self):
