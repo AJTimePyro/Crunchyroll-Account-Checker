@@ -8,8 +8,9 @@ testexp
 extra/
 combo.txt
 
-# Cache File
+# Cache File & Dir
 __pycache__
+resources
 
 # Result File
 result
