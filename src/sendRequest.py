@@ -28,15 +28,18 @@ class Request:
         self.headers : dict = DefaultHeader
         self.payload : dict = dict()
         self.encodedPayload : bytes | None = None
+        self.proxy : str = str()
     
     def setRequestData(
         self,
         url : str,
         headers : dict = dict(),
-        payload : dict = dict()
+        payload : dict = dict(),
+        proxy : str = str()
     ):
         self.setTargetUrl(url)
         self.updateHeader(headers)
+        self.setProxy(proxy)
 
         if payload:
             self.bindPayloadData(payload)
@@ -59,6 +62,12 @@ class Request:
         url : str
     ):
         self.url = url
+    
+    def setProxy(
+        self,
+        proxy : str
+    ):
+        self.proxy = proxy
     
     def updateHeader(
         self,
@@ -90,6 +99,9 @@ class Request:
             headers = self.headers,
             data = self.encodedPayload
         )
+
+        if self.proxy:
+            self.__req.set_proxy(self.proxy, 'http')
     
     def __openConnection(self):
         errorLog : dict = {
