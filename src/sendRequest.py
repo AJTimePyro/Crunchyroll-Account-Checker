@@ -9,10 +9,12 @@ from urllib import (
 )
 import json
 
+
 ### Constants
 DefaultHeader = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
 }
+
 
 ### Request class
 class Request:
@@ -25,8 +27,9 @@ class Request:
         self.url : str = url
         self.headers : dict = DefaultHeader
         self.payload : dict = dict()
+        self.encodedPayload : bytes | None = None
     
-    def sendRequestWithData(
+    def setRequestData(
         self,
         url : str,
         headers : dict = dict(),
@@ -34,12 +37,22 @@ class Request:
     ):
         self.setTargetUrl(url)
         self.updateHeader(headers)
-        self.bindPayloadData(payload)
-        self.sendRequest()
+
+        if payload:
+            self.bindPayloadData(payload)
     
     def sendRequest(self):
         self.__buildRequest()
         self.__openConnection()
+
+    def sendRequestWithData(
+        self,
+        url : str,
+        headers : dict = dict(),
+        payload : dict = dict()
+    ):
+        self.setRequestData(url, headers, payload)
+        self.sendRequest()
     
     def setTargetUrl(
         self,
@@ -57,7 +70,9 @@ class Request:
         self,
         data : dict
     ):
+
         self.payload.update(data)
+        self.encodedPayload = parse.urlencode(self.payload).encode()
     
     def _parseResponse(
         self,
@@ -72,7 +87,7 @@ class Request:
         self.__req = request.Request(
             self.url,
             headers = self.headers,
-            data = self.payload
+            data = self.encodedPayload
         )
     
     def __openConnection(self):
