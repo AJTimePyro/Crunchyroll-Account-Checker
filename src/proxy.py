@@ -33,4 +33,3 @@ class Proxy:
             self._file.readlines())
         )
 
-

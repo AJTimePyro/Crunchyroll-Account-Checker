@@ -24,8 +24,8 @@ def createDir(dirname : str):
 def main():
     
     createDir('result')
-    createDir('resource')
-
+    createDir('resources')
+    
     filename = input("Enter the name or path of file: ")
     if os.path.isfile(filename):
         src.checker.CrunchyrollChecker.create(filename)
