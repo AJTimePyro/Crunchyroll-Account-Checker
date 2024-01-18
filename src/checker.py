@@ -3,7 +3,8 @@
 
 ### Importing
 from src import (
-    sendRequest
+    sendRequest,
+    proxy
 )
 import re
 import time
@@ -29,6 +30,9 @@ class CrunchyrollChecker:
             "scope": "offline_access"
         }
         self.filename = filename
+        self.proxyObj = proxy.Proxy()
+        self.proxyObj.getProxies()
+        print(self.proxyObj.proxies)
     
     @classmethod
     def create(
