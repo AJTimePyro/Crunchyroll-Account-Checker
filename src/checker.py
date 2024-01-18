@@ -71,7 +71,8 @@ class CrunchyrollChecker:
         request.setRequestData(
             self.apiUrl + "auth/v1/token",
             headers,
-            data
+            data,
+            self.proxyObj.getProxy()
         )
 
         return request
@@ -175,7 +176,8 @@ class CrunchyrollChecker:
         request = sendRequest.Request()
         request.sendRequestWithData(
             self.apiUrl + 'accounts/v1/me',
-            header
+            header,
+            proxy = self.proxyObj.getProxy()
         )
         res = request.response
         print(res)
@@ -197,7 +199,8 @@ class CrunchyrollChecker:
         request = sendRequest.Request()
         request.sendRequestWithData(
             self.apiUrl + f'subs/v1/subscriptions/{externalID}/products',
-            header
+            header,
+            proxy = self.proxyObj.getProxy()
         )
         res = request.response
         print(res)

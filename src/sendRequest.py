@@ -52,9 +52,10 @@ class Request:
         self,
         url : str,
         headers : dict = dict(),
-        payload : dict = dict()
+        payload : dict = dict(),
+        proxy : str = str()
     ):
-        self.setRequestData(url, headers, payload)
+        self.setRequestData(url, headers, payload, proxy)
         self.sendRequest()
     
     def setTargetUrl(
