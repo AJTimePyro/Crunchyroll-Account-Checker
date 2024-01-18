@@ -2,7 +2,9 @@
 
 
 ### Importing
-from src import sendRequest
+from src import (
+    sendRequest
+)
 import re
 import time
 
@@ -88,6 +90,7 @@ class CrunchyrollChecker:
                     time.sleep(10)
                     self._tryToLogin(request)
                 else:
+                    print(e)
                     self._resultSaving(error = f'Error in while trying to login {e}')
 
             else:
@@ -171,6 +174,7 @@ class CrunchyrollChecker:
             header
         )
         res = request.response
+        print(res)
 
         if "error" in res:
             self._resultSaving(error = f'Error while getting external id {res["error"]}')
@@ -192,6 +196,7 @@ class CrunchyrollChecker:
             header
         )
         res = request.response
+        print(res)
 
         if "error" in res:
             if res["errorType"] == "http" and res["error"].code == 404:
