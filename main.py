@@ -17,10 +17,15 @@ import os
 import src.checker
 
 
+def createDir(dirname : str):
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
 def main():
     
-    if not os.path.exists('result'):
-        os.makedirs('result')
+    createDir('result')
+    createDir('resource')
+
     filename = input("Enter the name or path of file: ")
     if os.path.isfile(filename):
         src.checker.CrunchyrollChecker.create(filename)
