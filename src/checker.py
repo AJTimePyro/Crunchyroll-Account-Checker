@@ -16,6 +16,10 @@ DEFAULT_HEADER = {
 }
 AUTH_TOKEN = "bC1wbGZ0bmtneWFycGZxaGpoOC06TVFZX3pDeGlOUFk1RUVPX0xQRk9VNFFaZ1ktWVVZRXM="
 WARNING_COLOR = '\033[91m'
+INVALID_COLOR = '\033[93m'
+FREE_TRIAL_COLOR = '\033[94m'
+HIT_COLOR = '\033[92m'
+FREE_ACCOUNT_COLOR = '\033[96m'
 COLOR_END = '\033[0m'
 
 
@@ -55,39 +59,56 @@ class CrunchyrollChecker:
         self.hitFile.close()
         self.invalid.close()
     
-    def _letsLogin(self):
-        request = self._preparingLoginData()
-        self._tryToLogin(request)
-    
-    def _preparingLoginData(self):
-        data = dict(self.data)
-        data['username'] = self.email
-        data['password'] = self.password
+    def _prepareRequest(
+        self,
+        request : sendRequest.Request,
+        request_for : str,
+        **kwargs
+    ):
+        
+        url = self.apiUrl
+        data = dict()
         headers = dict(self.headers)
-        headers["authorization"] = self.auth
-        headers["Content-Type"] = "application/x-www-form-urlencoded"
-
-        request = sendRequest.Request()
+        
+        if request_for == "login":
+            url += "auth/v1/token"
+            data = dict(self.data)
+            data['username'] = self.email
+            data['password'] = self.password
+            headers["authorization"] = self.auth
+            headers["Content-Type"] = "application/x-www-form-urlencoded"
+        
+        elif request_for == "external":
+            url += "accounts/v1/me"
+            header = kwargs["header"]
+            headers.update(header)
+        
+        else:
+            externalID = kwargs["externalID"]
+            header = kwargs["header"]
+            headers.update(header)
+            url += f"subs/v1/subscriptions/{externalID}/products"
+        
         request.setRequestData(
-            self.apiUrl + "auth/v1/token",
+            url,
             headers,
-            data,
-            self.proxyObj.getProxy()
+            data
         )
-
-        return request
+    
+    def _letsLogin(self):
+        request = sendRequest.Request()
+        self._prepareRequest(request,"login")
+        self._tryToLogin(request)
 
     def _tryToLogin(
-            self,
-            request : sendRequest.Request
-        ):
+        self,
+        request : sendRequest.Request
+    ):
+        request.setProxy(self.proxyObj.getProxy())
         request.sendRequest()
         res = request.response
 
         if "error" in res:
-            def nextProxy():
-                request.setProxy(self.proxyObj.getProxy())
-                self._tryToLogin(request)
 
             e = res["error"]
             if res["errorType"] == "http":
@@ -100,7 +121,7 @@ class CrunchyrollChecker:
             elif res["errorType"] == "proxy":
                 print(self.proxyObj.getProxy(), " Proxy is not working while login ", e)
                 self.proxyObj.nextIndex()
-                nextProxy()
+                self._tryToLogin(request)
 
             else:
                 print(e)
@@ -153,29 +174,29 @@ class CrunchyrollChecker:
         if file == 'error':
             fileRefer = self.error
             fileLog = f'{printMsg} {error}'
-            color = '\033[91m'
+            color = WARNING_COLOR
             printLog = error
 
         elif file == 'invalid':
             fileRefer = self.invalid
             fileLog = printMsg
-            color = '\033[93m'
+            color = INVALID_COLOR
             printLog = "Invalid Login Credential"
         
         elif file == 'hit':
             fileLog = printMsg
             if free_trial:
                 fileRefer = self.trial
-                color = '\033[94m'
+                color = FREE_TRIAL_COLOR
                 printLog = "Free Trial Found"
             else:
                 fileRefer = self.hitFile
-                color = '\033[92m'
+                color = HIT_COLOR
                 printLog = "Hit Found"
         else:
             fileRefer = self.freeFile
             fileLog = printMsg
-            color = '\033[96m'
+            color = FREE_ACCOUNT_COLOR
             printLog = "Free Account Found"
         
         printMsg = color + f"{printMsg} {printLog}"
@@ -185,22 +206,31 @@ class CrunchyrollChecker:
         fileRefer.write(fileLog)
         fileRefer.flush()
     
-    def _premiumChecker(self, accessToken):
-        header = dict(self.headers)
+    def _premiumChecker(
+        self,
+        accessToken : str
+    ):
+        header = dict()
         header["authorization"] = f"Bearer {accessToken}"
         externalID = self._getExternalID(header)
         if externalID:
             self._subscriptionChecker(header, externalID)
         return
 
-    def _getExternalID(self, header):
+    def _getExternalID(
+        self,
+        header : dict[str, str]
+    ):
         request = sendRequest.Request()
-        request.setRequestData(
-            self.apiUrl + 'accounts/v1/me',
-            header
+        self._prepareRequest(
+            request,
+            "external",
+            header = header
         )
 
-        def gettingExternalID(request):
+        def gettingExternalID(
+            request : sendRequest.Request
+        ):
             request.setProxy(self.proxyObj.getProxy())
             request.sendRequest()
             res = request.response
@@ -228,14 +258,22 @@ class CrunchyrollChecker:
         
         return gettingExternalID(request)
 
-    def _subscriptionChecker(self, header, externalID):
+    def _subscriptionChecker(
+        self,
+        header : dict[str, str],
+        externalID : str
+    ):
         request = sendRequest.Request()
-        request.setRequestData(
-            self.apiUrl + f'subs/v1/subscriptions/{externalID}/products',
-            header
+        self._prepareRequest(
+            request,
+            "subscription",
+            header = header,
+            externalID = externalID
         )
 
-        def checkingSubscription(request):
+        def checkingSubscription(
+            request : sendRequest.Request
+        ):
             request.setProxy(self.proxyObj.getProxy())
             request.sendRequest()
             res = request.response
