@@ -104,6 +104,7 @@ class Request:
 
         if self.proxy:
             self.__req.set_proxy(self.proxy, 'http')
+            self.__req.set_proxy(self.proxy, 'https')
     
     def __openConnection(self):
         errorLog : dict = {
@@ -112,11 +113,15 @@ class Request:
         }
 
         try:
-            res = request.urlopen(self.__req)
+            res = request.urlopen(self.__req, timeout = 20)
             
         except error.HTTPError as e:
-            errorLog["errorType"] = "http"
             errorLog["error"] = e
+
+            if e.code in (406, 429, 403):
+                errorLog["errorType"] = "proxy"
+            else:
+                errorLog["errorType"] = "http"
             self.response = errorLog
 
         except (client.BadStatusLine, error.URLError) as e:

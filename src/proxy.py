@@ -12,14 +12,12 @@ class Proxy:
         self.proxy_api_url = "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all"
         self.request = sendRequest.Request()
         self.filepath = "resources/proxy.txt"
-        self.proxies : tuple[str] = tuple()
+        self.proxies : list[str] = list()
         self.proxyIndex = 0
 
     def getProxies(self):
-        return
-        self.openFile()
-        # self.request.sendRequestWithData(self.proxy_api_url)
-        # self.writeToFile()
+        self.request.sendRequestWithData(self.proxy_api_url)
+        self.writeToFile()
     
     def writeToFile(self):
         with open(self.filepath, 'w') as file:
@@ -31,7 +29,7 @@ class Proxy:
         self.parseProxies()
     
     def parseProxies(self):
-        self.proxies = tuple(map(
+        self.proxies = list(map(
             lambda x: x.removesuffix('\n'),
             self._file.readlines())
         )
@@ -39,14 +37,9 @@ class Proxy:
     def getProxy(self):
         if len(self.proxies) == 0:
             return str()
-        
-        if self.proxyIndex >= len(self.proxies):
-            self.proxyIndex = 0
         return self.proxies[self.proxyIndex]
     
     def nextIndex(self):
         if self.proxyIndex == len(self.proxies) - 1:
-            self.proxyIndex = 0
-        else:
-            self.proxyIndex += 1
-
+            self.proxyIndex = -1
+        self.proxyIndex += 1

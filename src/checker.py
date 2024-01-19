@@ -7,7 +7,6 @@ from src import (
     proxy
 )
 import re
-import time
 
 
 ### Some Global Variable
@@ -86,9 +85,7 @@ class CrunchyrollChecker:
         res = request.response
 
         if "error" in res:
-
-            def proxyErrorRetry():
-                self.proxyObj.nextIndex()
+            def nextProxy():
                 request.setProxy(self.proxyObj.getProxy())
                 self._tryToLogin(request)
 
@@ -96,22 +93,14 @@ class CrunchyrollChecker:
             if res["errorType"] == "http":
                 if e.code == 401:
                     self._resultSaving('invalid')
-                elif e.code == 403:
-                    proxyErrorRetry()
-                elif e.code == 429:
-                    print(WARNING_COLOR + "Too many Requests!!!\n" + "Let me take a sleep for 10 seconds." + COLOR_END)
-                    time.sleep(10)
-                    self._tryToLogin(request)
-                elif e.code == 406:
-                    print(WARNING_COLOR + "Try VPN or Proxy\n" + "Sleeping for 10 seconds!!!" + COLOR_END)
-                    time.sleep(10)
-                    self._tryToLogin(request)
                 else:
                     print(e)
                     self._resultSaving(error = f'Error in while trying to login {e}')
             
             elif res["errorType"] == "proxy":
-                proxyErrorRetry()
+                print(self.proxyObj.getProxy(), " Proxy is not working while login ", e)
+                self.proxyObj.nextIndex()
+                nextProxy()
 
             else:
                 print(e)
@@ -206,52 +195,74 @@ class CrunchyrollChecker:
 
     def _getExternalID(self, header):
         request = sendRequest.Request()
-        request.sendRequestWithData(
+        request.setRequestData(
             self.apiUrl + 'accounts/v1/me',
-            header,
-            proxy = self.proxyObj.getProxy()
+            header
         )
-        res = request.response
 
-        if "error" in res:
-            self._resultSaving(file= 'free')
-            print(f'Error while getting external id {res}')
-        
-        else:
-            try:
-                externalID = res['external_id']
-            except KeyError:
-                print(f'{self.email}:{self.password} Something went wrong! While getting externalID')
-                print(res)
-                self._resultSaving(file = 'free')
+        def gettingExternalID(request):
+            request.setProxy(self.proxyObj.getProxy())
+            request.sendRequest()
+            res = request.response
+
+            if "error" in res:
+                if res["errorType"] == "proxy":
+                    print(self.proxyObj.getProxy(), " Proxy is not working while getting external id ", res["error"])
+                    self.proxyObj.nextIndex()
+
+                    return gettingExternalID(request)
+
+                else:
+                    self._resultSaving(file = 'free')
+                    print(f'Error while getting external id {res}')
+            
             else:
-                return externalID
+                try:
+                    externalID = res['external_id']
+                except KeyError:
+                    print(f'{self.email}:{self.password} Something went wrong! While getting externalID')
+                    print(res)
+                    self._resultSaving(file = 'free')
+                else:
+                    return externalID
+        
+        return gettingExternalID(request)
 
     def _subscriptionChecker(self, header, externalID):
         request = sendRequest.Request()
-        request.sendRequestWithData(
+        request.setRequestData(
             self.apiUrl + f'subs/v1/subscriptions/{externalID}/products',
-            header,
-            proxy = self.proxyObj.getProxy()
+            header
         )
-        res = request.response
 
-        if "error" in res:
-            if res["errorType"] == "http" and res["error"].code == 404:
-                self._resultSaving(file = 'free')
+        def checkingSubscription(request):
+            request.setProxy(self.proxyObj.getProxy())
+            request.sendRequest()
+            res = request.response
 
+            if "error" in res:
+                if res["errorType"] == "http" and res["error"].code == 404:
+                    self._resultSaving(file = 'free')
+                
+                elif res["errorType"] == "proxy":
+                    print(self.proxyObj.getProxy(), " Proxy is not working while checking subscription ", res["error"])
+                    self.proxyObj.nextIndex()
+                    checkingSubscription(request)
+
+                else:
+                    print(res)
+                    self._resultSaving(error = f'Error while checking subscription {res["error"]}')
+            
             else:
-                print(res)
-                self._resultSaving(error = f'Error while checking subscription {res["error"]}')
+                if res['total']:
+                    print(res)
+                    free_trial = res['items'][0]['active_free_trial']
+                    self._resultSaving(
+                        file = 'hit',
+                        free_trial = free_trial
+                    )
+                else:
+                    self._resultSaving(file = 'free')
         
-        else:
-            if res['total']:
-                print(res)
-                free_trial = res['items'][0]['active_free_trial']
-                self._resultSaving(
-                    file = 'hit',
-                    free_trial = free_trial
-                )
-            else:
-                self._resultSaving(file = 'free')
+        checkingSubscription(request)
 
