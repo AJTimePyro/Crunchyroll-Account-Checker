@@ -16,6 +16,8 @@ DEFAULT_HEADER = {
     "User-Agent": "Crunchyroll/3.47.0 Android/10 okhttp/4.12.0"
 }
 AUTH_TOKEN = "bC1wbGZ0bmtneWFycGZxaGpoOC06TVFZX3pDeGlOUFk1RUVPX0xQRk9VNFFaZ1ktWVVZRXM="
+WARNING_COLOR = '\033[91m'
+COLOR_END = '\033[0m'
 
 
 ### Checker Class
@@ -84,7 +86,6 @@ class CrunchyrollChecker:
         res = request.response
 
         if "error" in res:
-            print(res)
 
             def proxyErrorRetry():
                 self.proxyObj.nextIndex()
@@ -98,7 +99,11 @@ class CrunchyrollChecker:
                 elif e.code == 403:
                     proxyErrorRetry()
                 elif e.code == 429:
-                    print("Too many Requests, Let me take a sleep for 10 seconds.")
+                    print(WARNING_COLOR + "Too many Requests!!!\n" + "Let me take a sleep for 10 seconds." + COLOR_END)
+                    time.sleep(10)
+                    self._tryToLogin(request)
+                elif e.code == 406:
+                    print(WARNING_COLOR + "Try VPN or Proxy\n" + "Sleeping for 10 seconds!!!" + COLOR_END)
                     time.sleep(10)
                     self._tryToLogin(request)
                 else:
@@ -109,6 +114,7 @@ class CrunchyrollChecker:
                 proxyErrorRetry()
 
             else:
+                print(e)
                 self._resultSaving(error = f'Error in while trying to login {e}')
 
         else:
@@ -149,29 +155,45 @@ class CrunchyrollChecker:
         error = None,
         free_trial = False
         ):
+
+        fileLog = str()
         printMsg = f'{self.email}:{self.password}'
+        color = str()
+        printLog = str()
+
         if file == 'error':
             fileRefer = self.error
-            printMsg += f' {error}'
-            fileMsg = printMsg + '\n'
+            fileLog = f'{printMsg} {error}'
+            color = '\033[91m'
+            printLog = error
+
         elif file == 'invalid':
             fileRefer = self.invalid
-            fileMsg = printMsg + '\n'
-            printMsg += ' Invalid Login Credential'
+            fileLog = printMsg
+            color = '\033[93m'
+            printLog = "Invalid Login Credential"
+        
         elif file == 'hit':
-            fileMsg = printMsg + '\n'
+            fileLog = printMsg
             if free_trial:
                 fileRefer = self.trial
-                printMsg += ' Free Trial Found'
+                color = '\033[94m'
+                printLog = "Free Trial Found"
             else:
                 fileRefer = self.hitFile
-                printMsg += ' Hit Found' 
+                color = '\033[92m'
+                printLog = "Hit Found"
         else:
             fileRefer = self.freeFile
-            fileMsg = printMsg + '\n'
-            printMsg += ' Free Account Found'
-        print(printMsg)
-        fileRefer.write(fileMsg)
+            fileLog = printMsg
+            color = '\033[96m'
+            printLog = "Free Account Found"
+        
+        printMsg = color + f"{printMsg} {printLog}"
+        fileLog += '\n'
+        
+        print(printMsg + COLOR_END)
+        fileRefer.write(fileLog)
         fileRefer.flush()
     
     def _premiumChecker(self, accessToken):
@@ -190,10 +212,10 @@ class CrunchyrollChecker:
             proxy = self.proxyObj.getProxy()
         )
         res = request.response
-        print(res)
 
         if "error" in res:
-            self._resultSaving(error = f'Error while getting external id {res["error"]}')
+            self._resultSaving(file= 'free')
+            print(f'Error while getting external id {res}')
         
         else:
             try:
@@ -213,17 +235,18 @@ class CrunchyrollChecker:
             proxy = self.proxyObj.getProxy()
         )
         res = request.response
-        print(res)
 
         if "error" in res:
             if res["errorType"] == "http" and res["error"].code == 404:
                 self._resultSaving(file = 'free')
 
             else:
+                print(res)
                 self._resultSaving(error = f'Error while checking subscription {res["error"]}')
         
         else:
             if res['total']:
+                print(res)
                 free_trial = res['items'][0]['active_free_trial']
                 self._resultSaving(
                     file = 'hit',
