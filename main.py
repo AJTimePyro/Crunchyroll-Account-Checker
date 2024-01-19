@@ -28,7 +28,14 @@ def main():
     
     filename = input("Enter the name or path of file: ")
     if os.path.isfile(filename):
-        src.checker.CrunchyrollChecker.create(filename)
+        proxy_filename = input("Enter the name or path of proxy(http/https only) file (optional): ")
+        if not proxy_filename:
+            proxy_filename = None
+        elif not os.path.isfile(proxy_filename):
+            proxy_filename = None
+            print("Proxy file not found, fetching proxy from internet...")
+        
+        src.checker.CrunchyrollChecker.create(filename, proxy_filename)
     else:
         print("File not found.")
 

@@ -26,7 +26,12 @@ COLOR_END = '\033[0m'
 ### Checker Class
 class CrunchyrollChecker:
 
-    def __init__(self, filename):
+    def __init__(
+        self,
+        filename : str,
+        proxy_filename : str | None = None
+    ):
+        
         self.apiUrl = "https://beta-api.crunchyroll.com/"
         self.headers = DEFAULT_HEADER
         self.auth = "Basic " + AUTH_TOKEN
@@ -35,15 +40,17 @@ class CrunchyrollChecker:
             "scope": "offline_access"
         }
         self.filename = filename
-        self.proxyObj = proxy.Proxy()
-        self.proxyObj.getProxies()
+
+        self.proxyObj = proxy.Proxy(proxy_filename)
     
     @classmethod
     def create(
         cls,
-        filename : str
+        filename : str,
+        proxy_filename : str | None = None
         ):
-        self = CrunchyrollChecker(filename)
+
+        self = CrunchyrollChecker(filename, proxy_filename)
         self._resultFile()
         self._checker()
 
@@ -293,7 +300,6 @@ class CrunchyrollChecker:
             
             else:
                 if res['total']:
-                    print(res)
                     free_trial = res['items'][0]['active_free_trial']
                     self._resultSaving(
                         file = 'hit',

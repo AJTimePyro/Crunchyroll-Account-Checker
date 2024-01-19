@@ -5,23 +5,39 @@
 from src import sendRequest
 
 
+### Constant
+DEFAULT_FILEPATH = "resources/proxy.txt"
+
+
 ### Proxy Class
 class Proxy:
 
-    def __init__(self):
+    def __init__(
+        self,
+        proxy_filename : str | None = None
+        ):
         self.proxy_api_url = "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all"
-        self.request = sendRequest.Request()
-        self.filepath = "resources/proxy.txt"
         self.proxies : list[str] = list()
         self.proxyIndex = 0
 
+        if proxy_filename:
+            self.filepath = proxy_filename
+            self.openFile()
+        else:
+            self.filepath = DEFAULT_FILEPATH
+            self.getProxies()
+
     def getProxies(self):
-        self.request.sendRequestWithData(self.proxy_api_url)
-        self.writeToFile()
+        request = sendRequest.Request()
+        request.sendRequestWithData(self.proxy_api_url)
+        self.writeToFile(request.response)
     
-    def writeToFile(self):
+    def writeToFile(
+        self,
+        res : str
+    ):
         with open(self.filepath, 'w') as file:
-            file.write(self.request.response)
+            file.write(res)
         self.openFile()
     
     def openFile(self):
