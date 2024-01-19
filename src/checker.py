@@ -32,7 +32,6 @@ class CrunchyrollChecker:
         self.filename = filename
         self.proxyObj = proxy.Proxy()
         self.proxyObj.getProxies()
-        print(self.proxyObj.proxies)
     
     @classmethod
     def create(
@@ -85,11 +84,19 @@ class CrunchyrollChecker:
         res = request.response
 
         if "error" in res:
+            print(res)
+
+            def proxyErrorRetry():
+                self.proxyObj.nextIndex()
+                request.setProxy(self.proxyObj.getProxy())
+                self._tryToLogin(request)
+
             e = res["error"]
             if res["errorType"] == "http":
-
                 if e.code == 401:
                     self._resultSaving('invalid')
+                elif e.code == 403:
+                    proxyErrorRetry()
                 elif e.code == 429:
                     print("Too many Requests, Let me take a sleep for 10 seconds.")
                     time.sleep(10)
@@ -97,6 +104,9 @@ class CrunchyrollChecker:
                 else:
                     print(e)
                     self._resultSaving(error = f'Error in while trying to login {e}')
+            
+            elif res["errorType"] == "proxy":
+                proxyErrorRetry()
 
             else:
                 self._resultSaving(error = f'Error in while trying to login {e}')

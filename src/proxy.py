@@ -16,8 +16,10 @@ class Proxy:
         self.proxyIndex = 0
 
     def getProxies(self):
-        self.request.sendRequestWithData(self.proxy_api_url)
-        self.writeToFile()
+        return
+        self.openFile()
+        # self.request.sendRequestWithData(self.proxy_api_url)
+        # self.writeToFile()
     
     def writeToFile(self):
         with open(self.filepath, 'w') as file:

@@ -7,6 +7,7 @@ from urllib import (
     parse,
     error
 )
+from http import client
 import json
 
 
@@ -115,6 +116,11 @@ class Request:
             
         except error.HTTPError as e:
             errorLog["errorType"] = "http"
+            errorLog["error"] = e
+            self.response = errorLog
+
+        except (client.BadStatusLine, error.URLError) as e:
+            errorLog["errorType"] = "proxy"
             errorLog["error"] = e
             self.response = errorLog
 
