@@ -7,6 +7,7 @@ venv
 testexp
 extra/
 combo.txt
+proxy.txt
 
 # Cache File & Dir
 __pycache__
