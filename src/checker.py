@@ -29,7 +29,8 @@ class CrunchyrollChecker:
     def __init__(
         self,
         filename : str,
-        proxy_filename : str | None = None
+        proxy_filename : str | None = None,
+        proxyEnable : bool = False
     ):
         
         self.apiUrl = "https://beta-api.crunchyroll.com/"
@@ -41,16 +42,17 @@ class CrunchyrollChecker:
         }
         self.filename = filename
 
-        self.proxyObj = proxy.Proxy(proxy_filename)
+        self.proxyObj = proxy.Proxy(proxy_filename, proxyEnable)
     
     @classmethod
     def create(
         cls,
         filename : str,
-        proxy_filename : str | None = None
+        proxy_filename : str | None = None,
+        proxyEnable : bool = False
         ):
 
-        self = CrunchyrollChecker(filename, proxy_filename)
+        self = CrunchyrollChecker(filename, proxy_filename, proxyEnable)
         self._resultFile()
         self._checker()
 

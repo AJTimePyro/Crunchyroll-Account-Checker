@@ -28,14 +28,24 @@ def main():
     
     filename = input("Enter the name or path of file: ")
     if os.path.isfile(filename):
-        proxy_filename = input("Enter the name or path of proxy(http/https only) file (optional): ")
-        if not proxy_filename:
-            proxy_filename = None
-        elif not os.path.isfile(proxy_filename):
-            proxy_filename = None
-            print("Proxy file not found, fetching proxy from internet...")
+        proxy_filename = None
+        proxyEnable = input("Do you want to enable proxy?(y/n): ")
+        if proxyEnable.lower() == 'y':
+            proxyEnable = True
+
+            proxyFilename = input("Enter the name or path of proxy(http/https only) file (optional): ")
+            if proxyFilename:
+                if os.path.isfile(proxyFilename):
+                    proxy_filename = proxyFilename
+                else:
+                    print("Proxy file not found, fetching proxy from internet...")
+            else:
+                print("Fetching proxy from internet...")
         
-        src.checker.CrunchyrollChecker.create(filename, proxy_filename)
+        else:
+            proxyEnable = False
+        
+        src.checker.CrunchyrollChecker.create(filename, proxy_filename, proxyEnable)
     else:
         print("File not found.")
 
