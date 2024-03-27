@@ -57,7 +57,7 @@ class CrunchyrollChecker:
         self._checker()
 
     def _checker(self):
-        file = open(self.filename)
+        file = open(self.filename, errors='ignore')
         for line in file.readlines():
             loginDetail = self._filterEmailPass(line)
             if loginDetail:
