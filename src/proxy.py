@@ -3,6 +3,7 @@
 
 ### Importing
 from src import sendRequest
+from typing import Union
 
 
 ### Constant
@@ -14,7 +15,7 @@ class Proxy:
 
     def __init__(
         self,
-        proxy_filename : str | None = None,
+        proxy_filename : Union[str, None] = None,
         proxyEnable : bool = False
         ):
         self.proxy_api_url = "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all"

@@ -113,7 +113,7 @@ class Request:
         }
 
         try:
-            res = request.urlopen(self.__req, timeout = 20)
+            res = request.urlopen(self.__req, timeout = 5)
             
         except error.HTTPError as e:
             errorLog["error"] = e
