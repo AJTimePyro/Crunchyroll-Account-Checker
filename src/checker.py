@@ -14,7 +14,7 @@ EMAILPASS_REGEX = r'[\w\.]+@[\w\.]+:[\S]+'
 DEFAULT_HEADER = {
     "User-Agent": "Crunchyroll/3.47.0 Android/10 okhttp/4.12.0"
 }
-AUTH_TOKEN = "ejFrYWxhenhhaXFvNDhnZDgzbXg6LVdkamJidmJyNTE5QUxEMEtvUDBTQTgyemdTaHpoNkk="
+AUTH_TOKEN = "dXU4aG0wb2g4dHFpOWV0eXl2aGo6SDA2VnVjRnZUaDJ1dEYxM0FBS3lLNE85UTRhX3BlX1o="
 WARNING_COLOR = '\033[91m'
 INVALID_COLOR = '\033[93m'
 FREE_TRIAL_COLOR = '\033[94m'
